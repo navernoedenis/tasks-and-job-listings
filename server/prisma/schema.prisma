@@ -1,0 +1,111 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String
+  expiresAt DateTime
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile Profile?
+
+  tasks       Task[]
+  JobListings JobListing[]
+}
+
+enum UserRole {
+  ROOT
+  ADMIN
+  DEVELOPER
+  USER
+}
+
+model Profile {
+  id        String  @id @default(uuid())
+  firstname String?
+  lastname  String?
+  avatar    String?
+  bio       String? @db.VarChar(255)
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id        String       @id @default(uuid())
+  title     String
+  category  TaskCategory @default(PERSONAL)
+  priority  TaskPriority @default(LOW)
+  status    TaskStatus   @default(TODO)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+}
+
+enum TaskCategory {
+  WORK
+  PERSONAL
+}
+
+enum TaskPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+model JobListing {
+  id               String                    @id @default(uuid())
+  title            String
+  company          String
+  location         String
+  url              String
+  type             JobListingType            @default(INTERNSHIP)
+  experienceLevel  JobListingExperienceLevel @default(JUNIOR)
+  salary           Int                       @default(400)
+  shortDescription String                    @db.VarChar(200)
+  description      String                    @db.VarChar(2000)
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+  expiresAt        DateTime?
+
+  postedById String?
+  postedBy   User?   @relation(fields: [postedById], references: [id], onDelete: SetNull)
+}
+
+enum JobListingType {
+  FULL_TIME
+  PART_TIME
+  INTERNSHIP
+}
+
+enum JobListingExperienceLevel {
+  SENIOR
+  MIDDLE
+  JUNIOR
+}
